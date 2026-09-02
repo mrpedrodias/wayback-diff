@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Wayback Diff",
+  "version": "0.1.0",
+  "description": "Compare any page against its Wayback Machine snapshots — side-by-side text and HTML diffs.",
+  "minimum_chrome_version": "112",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://web.archive.org/*"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Wayback Diff — compare this page with the Wayback Machine",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+W" },
+      "description": "Compare the current page with the Wayback Machine"
+    }
+  }
+}

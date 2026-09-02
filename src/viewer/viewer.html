@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wayback Diff</title>
+  <link rel="icon" href="../../icons/icon32.png">
+  <link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+  <header class="bar top">
+    <img class="logo" src="../../icons/icon32.png" alt="" width="20" height="20">
+    <strong class="brand">Wayback Diff</strong>
+    <form id="url-form" class="url-form">
+      <input id="url" type="text" spellcheck="false" autocomplete="off" placeholder="https://example.com/page">
+      <button type="submit" id="load">Load</button>
+      <a id="calendar" class="quiet" target="_blank" rel="noopener" hidden>Wayback calendar ↗</a>
+    </form>
+  </header>
+
+  <section class="bar sources">
+    <div class="side" data-side="a">
+      <span class="tag tag-a">A</span>
+      <button class="step" data-side="a" data-dir="older" title="Older capture">◀</button>
+      <select id="sel-a" data-side="a"></select>
+      <button class="step" data-side="a" data-dir="newer" title="Newer capture">▶</button>
+    </div>
+    <button id="swap" title="Swap sides">⇄</button>
+    <div class="side" data-side="b">
+      <span class="tag tag-b">B</span>
+      <button class="step" data-side="b" data-dir="older" title="Older capture">◀</button>
+      <select id="sel-b" data-side="b"></select>
+      <button class="step" data-side="b" data-dir="newer" title="Newer capture">▶</button>
+    </div>
+    <button id="compare" class="primary">Compare</button>
+    <button id="refresh-live" title="Re-capture the live page">Refresh live</button>
+  </section>
+
+  <section class="bar meta">
+    <div id="meta-a" class="meta-side"></div>
+    <div id="meta-b" class="meta-side"></div>
+  </section>
+
+  <section class="bar tools">
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-mode="text" role="tab">Text</button>
+      <button class="tab" data-mode="html" role="tab">HTML</button>
+      <button class="tab" data-mode="summary" role="tab">Summary</button>
+    </div>
+    <label><input type="checkbox" id="opt-ignore-ws"> Ignore whitespace</label>
+    <label><input type="checkbox" id="opt-only-changes" checked> Only changes</label>
+    <label class="ctx">Context <input type="number" id="opt-context" min="0" max="50" value="3"></label>
+    <label class="html-only"><input type="checkbox" id="opt-format" checked> Pretty-print HTML</label>
+    <label class="html-only" title="Hide inline script/style bodies (JSON-LD is kept)"><input type="checkbox" id="opt-collapse-scripts"> Collapse scripts</label>
+    <div class="layout-toggle">
+      <button class="layout active" data-layout="split" title="Side by side">Split</button>
+      <button class="layout" data-layout="unified" title="Unified">Unified</button>
+    </div>
+    <span id="stats" class="stats"></span>
+    <div class="nav">
+      <button id="prev-hunk" title="Previous change (p)">▲</button>
+      <span id="hunk-pos">–</span>
+      <button id="next-hunk" title="Next change (n)">▼</button>
+    </div>
+  </section>
+
+  <div id="notice" class="notice" hidden></div>
+  <main id="out" class="out"></main>
+
+  <script src="../vendor/diff.js"></script>
+  <script type="module" src="viewer.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "wayback-diff",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension: diff a page against its Wayback Machine snapshots — clean text and HTML, side by side.",
+  "type": "module",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "zip": "rm -f wayback-diff.zip && zip -qr wayback-diff.zip manifest.json icons src -x '*.DS_Store' && ls -l wayback-diff.zip"
+  },
+  "dependencies": {
+    "diff": "^9.0.0"
+  }
+}
