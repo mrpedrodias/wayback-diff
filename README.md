@@ -83,5 +83,5 @@ scripts/e2e-smoke.py  headless Playwright end-to-end check (see below)
 
 - Wayback rate-limits bursts of requests; the viewer reports a 429 and you can retry after a moment.
 - Very large pages diff in well under a second, but a diff that would take more than 8 s is abandoned with a message rather than freezing the tab.
-- The `id_` body is decoded using the archived `Content-Type`; captures of very old pages with a wrong or missing charset may show mojibake.
+- The `id_` body is decoded using the charset from the archived `Content-Type`, else the page's `<meta charset>`, else UTF-8; pages that declare the wrong charset (or none, while not being UTF-8) may still show mojibake.
 - "Live — page source" re-fetches the URL from inside the page, so sites that vary content per request (A/B tests, rotating honeypot fields, nonces) will show those differences — **Collapse scripts** and the Text view are the quick way past that noise.

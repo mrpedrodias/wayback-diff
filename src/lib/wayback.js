@@ -53,15 +53,28 @@ export async function fetchSnapshot(url, timestamp, { signal } = {}) {
   const res = await fetch(`https://web.archive.org/web/${timestamp}id_/${url}`, { signal });
   if (res.status === 429) throw new Error('The Wayback Machine is rate-limiting requests — wait a minute and retry.');
   if (!res.ok) throw new Error(`Wayback returned HTTP ${res.status} for snapshot ${timestamp}`);
-  const html = await res.text();
+  const buf = await res.arrayBuffer();
   const m = res.url.match(/\/web\/(\d{14})id_\/(.*)$/);
   return {
-    html,
+    html: decodeHtml(buf, res.headers.get('content-type')),
     status: res.status,
     timestamp: m ? m[1] : timestamp,
     resolvedUrl: m ? m[2] : url,
-    bytes: byteLength(html),
+    bytes: buf.byteLength,
   };
+}
+
+// fetch's text() always decodes as UTF-8. Old pages are often Latin-1, Shift_JIS,
+// EUC-JP…, declared in the Content-Type header or (more often, for archived pages)
+// only in a <meta> tag near the top, so honour whichever is present.
+export function decodeHtml(buf, contentType) {
+  const head = new TextDecoder('latin1').decode(buf.slice(0, 2048));
+  const m = /charset=["']?([\w.:-]+)/i.exec(contentType || '') || /<meta[^>]+charset=["']?([\w.:-]+)/i.exec(head);
+  try {
+    return new TextDecoder(m ? m[1] : 'utf-8').decode(buf);
+  } catch { // unknown label
+    return new TextDecoder().decode(buf);
+  }
 }
 
 export function wayback(url, timestamp) {

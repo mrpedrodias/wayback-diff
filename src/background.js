@@ -67,7 +67,8 @@ async function grabPage() {
       headers: { Accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
     });
     out.sourceStatus = res.status;
-    out.source = await res.text();
+    // Decode with the page's own charset; text() would assume UTF-8.
+    out.source = new TextDecoder(document.characterSet).decode(await res.arrayBuffer());
   } catch (e) {
     out.sourceError = String(e && e.message || e);
   }

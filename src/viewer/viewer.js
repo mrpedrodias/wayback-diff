@@ -1,7 +1,7 @@
 // Viewer page: pick two sources (Wayback captures or the live page), fetch them,
 // and render the Text / HTML / Summary comparison.
 import {
-  normalizeUrl, listSnapshots, fetchSnapshot, wayback, calendar, formatTimestamp, byteLength, SNAPSHOT_LIMIT,
+  normalizeUrl, listSnapshots, fetchSnapshot, decodeHtml, wayback, calendar, formatTimestamp, byteLength, SNAPSHOT_LIMIT,
 } from '../lib/wayback.js';
 import { extractText, formatHtml, summarize } from '../lib/extract.js';
 import { computeDiff, diffStats, hunkStarts, renderSplit, renderUnified, inlineDiff, esc } from '../lib/diffview.js';
@@ -90,6 +90,7 @@ async function loadUrl(input, initial = {}) {
   els.selA.innerHTML = els.selB.innerHTML = '';
   try {
     const { snapshots, truncated } = await listSnapshots(url);
+    if (state.url !== url) return; // superseded by a newer URL
     state.snapshots = snapshots;
     state.truncated = truncated;
     if (!snapshots.length) notice('The Wayback Machine has no successful (HTTP 200) captures of this URL.');
@@ -169,8 +170,7 @@ async function compare() {
     render();
   } catch (e) {
     if (token !== state.loadToken) return;
-    placeholder('');
-    notice(`Fetch failed: ${e.message}`, 'error');
+    placeholder(`Fetch failed: ${e.message}`);
   } finally {
     if (token === state.loadToken) els.compare.disabled = false;
   }
@@ -261,6 +261,7 @@ function renderRows() {
     ? `<div class="placeholder">No differences in the ${state.mode === 'text' ? 'extracted text' : 'HTML'}.</div>`
     : '';
   els.out.innerHTML = none + table;
+  document.getElementById(`hunk-${state.hunkIdx}`)?.classList.add('current');
   const st = diffStats(state.rows);
   els.stats.innerHTML = `<span class="plus">+${st.added}</span> <span class="minus">−${st.removed}</span> ~${st.modified} · ${st.total} lines`;
   updateHunkPos();
@@ -297,6 +298,7 @@ function placeholder(msg, spinner = false) {
 }
 
 function notice(msg, kind = 'info') {
+  if (state.notices.some((n) => n.msg === msg)) return;
   state.notices.push({ msg, kind });
   els.notice.hidden = false;
   els.notice.classList.toggle('error', state.notices.some((n) => n.kind === 'error'));
@@ -366,7 +368,7 @@ async function fetchLiveDirect(url) {
   const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
   const capture = {
     url, title: '', capturedAt: Date.now(), dom: null,
-    source: await res.text(), sourceStatus: res.status, sourceError: null,
+    source: decodeHtml(await res.arrayBuffer(), res.headers.get('content-type')), sourceStatus: res.status, sourceError: null,
   };
   await chrome.storage.session.set({ [`live:${url}`]: capture });
   return capture;
@@ -384,6 +386,7 @@ function setMode(mode, { render: doRender = true } = {}) {
 }
 
 function syncLocation() {
+  if (!state.url) return;
   const params = new URLSearchParams({ url: state.url, mode: state.mode });
   if (state.tabId) params.set('tab', state.tabId);
   if (els.selA.value) params.set('a', els.selA.value);
@@ -441,12 +444,13 @@ function bindEvents() {
     redraw();
   });
 
-  els.prev.addEventListener('click', () => gotoHunk(state.hunkIdx - 1));
+  const prevHunk = () => gotoHunk(Math.max(state.hunkIdx, 0) - 1);
+  els.prev.addEventListener('click', prevHunk);
   els.next.addEventListener('click', () => gotoHunk(state.hunkIdx + 1));
   document.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, select, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.matches('input:not([type=checkbox]), select, textarea') || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'n' || e.key === 'j') gotoHunk(state.hunkIdx + 1);
-    else if (e.key === 'p' || e.key === 'k') gotoHunk(state.hunkIdx - 1);
+    else if (e.key === 'p' || e.key === 'k') prevHunk();
   });
 
   // Unfold a collapsed run of unchanged lines, keeping the viewport where it is.
